@@ -34,6 +34,15 @@ func listTables() mcp.Tool {
 	)
 }
 
+// Define a struct to represent the response for listTablesHandler
+// This struct will replace the map currently used
+
+type ListTablesResponse struct {
+	Cluster  string   `json:"cluster"`
+	Database string   `json:"database"`
+	Tables   []string `json:"tables"`
+}
+
 // listTablesHandler handles the request to list all tables in a specific Azure Data Explorer database.
 func listTablesHandler(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 
@@ -70,13 +79,13 @@ func listTablesHandler(ctx context.Context, request mcp.CallToolRequest) (*mcp.C
 		tableNames = append(tableNames, tableName)
 	}
 
-	result := map[string]any{
-		"cluster":  clusterName,
-		"database": dbName,
-		"tables":   tableNames,
+	response := ListTablesResponse{
+		Cluster:  clusterName,
+		Database: dbName,
+		Tables:   tableNames,
 	}
 
-	jsonResult, err := json.Marshal(result)
+	jsonResult, err := json.Marshal(response)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +121,18 @@ func getSchema() mcp.Tool {
 	)
 }
 
-// getSchemaHandler handles the request to retrieve the schema of a specific table in an Azure Data Explorer database.
+// Define a struct to represent the schema response
+// This is to aid testing
+
+type TableSchemaResponse struct {
+	Name           string `json:"Name"`
+	OrderedColumns []struct {
+		Name    string `json:"Name"`
+		Type    string `json:"Type"`
+		CslType string `json:"CslType"`
+	} `json:"OrderedColumns"`
+}
+
 func getSchemaHandler(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 
 	clusterName, ok := request.Params.Arguments["cluster"].(string)
@@ -152,6 +172,19 @@ func getSchemaHandler(ctx context.Context, request mcp.CallToolRequest) (*mcp.Ca
 	if err != nil {
 		return nil, err
 	}
+
+	// var schemaResponse TableSchemaResponse
+	// err = json.Unmarshal([]byte(jsonSchema), &schemaResponse)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// responseJSON, err := json.Marshal(schemaResponse)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	//return mcp.NewToolResultText(string(responseJSON)), nil
 
 	return mcp.NewToolResultText(jsonSchema), nil
 }

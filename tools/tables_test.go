@@ -3,12 +3,12 @@ package tools
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"strings"
 	"testing"
 
-	"github.com/abhirockzz/mcp_kusto/common"
+	"slices"
+
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -39,7 +39,7 @@ func TestListTablesHandler(t *testing.T) {
 				ProgressToken mcp.ProgressToken `json:"progressToken,omitempty"`
 			} `json:"_meta,omitempty"`
 		}{
-			Name: "get_table_schema",
+			Name: "list_tables",
 			Arguments: map[string]any{
 				"cluster":  clusterName,
 				"database": dbName,
@@ -64,39 +64,27 @@ func TestListTablesHandler(t *testing.T) {
 		t.Fatal("Expected non-empty content")
 	}
 
-	// Unmarshal the content to check for the "tables" key
-	var output map[string]any
+	// Unmarshal the content to check for the response struct
+	var output ListTablesResponse
 	if err := json.Unmarshal([]byte(content.Text), &output); err != nil {
 		t.Fatalf("Failed to unmarshal content: %v", err)
 	}
 
-	// Validate the result contains the "tables" key
-	tables, ok := output["tables"].([]any)
-	if !ok {
-		t.Fatal("Expected 'tables' key in unmarshaled output")
+	// Validate the result contains the expected cluster name
+	expectedClusterName := clusterName
+	if output.Cluster != expectedClusterName {
+		t.Fatalf("Expected cluster name '%s', but got '%v'", expectedClusterName, output.Cluster)
 	}
 
-	// Verify the cluster name
-	expectedClusterName := clusterName // Use the cluster name from the environment variable
-	if output["cluster"] != expectedClusterName {
-		t.Fatalf("Expected cluster name '%s', but got '%v'", expectedClusterName, output["cluster"])
+	// Validate the result contains the expected database name
+	expectedDatabaseName := dbName
+	if output.Database != expectedDatabaseName {
+		t.Fatalf("Expected database name '%s', but got '%v'", expectedDatabaseName, output.Database)
 	}
 
-	// Verify the database name
-	expectedDatabaseName := dbName // Use the database name from the environment variable
-	if output["database"] != expectedDatabaseName {
-		t.Fatalf("Expected database name '%s', but got '%v'", expectedDatabaseName, output["database"])
-	}
-
-	// Verify the exact table name is present
+	// Validate the result contains the expected table name
 	expectedTableName := tableName
-	found := false
-	for _, table := range tables {
-		if table == expectedTableName {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(output.Tables, expectedTableName)
 	if !found {
 		t.Fatalf("Expected table name '%s' not found in tables", expectedTableName)
 	}
@@ -142,13 +130,6 @@ func TestGetSchemaHandler(t *testing.T) {
 		},
 	}
 
-	// Create a client and set up the test environment
-	client, err := common.GetClient(fmt.Sprintf(clusterNameFormat, clusterName))
-	if err != nil {
-		t.Fatalf("Failed to create client: %v", err)
-	}
-	defer client.Close()
-
 	// Call the handler
 	result, err := getSchemaHandler(ctx, request)
 	if err != nil {
@@ -167,24 +148,17 @@ func TestGetSchemaHandler(t *testing.T) {
 	t.Logf("Schema text: %s", schema.Text)
 
 	// Verify the schema response
-	var schemaResponse map[string]any
-	if err := json.Unmarshal([]byte(result.Content[0].(mcp.TextContent).Text), &schemaResponse); err != nil {
+	var schemaResponse TableSchemaResponse
+	if err := json.Unmarshal([]byte(schema.Text), &schemaResponse); err != nil {
 		t.Fatalf("Failed to unmarshal schema response: %v", err)
 	}
 
 	// Check table name
-	expectedTableName := tableName
-	if schemaResponse["Name"] != expectedTableName {
-		t.Fatalf("Expected table name '%s', but got '%v'", expectedTableName, schemaResponse["Name"])
+	if schemaResponse.Name != tableName {
+		t.Fatalf("Expected table name '%s', but got '%v'", tableName, schemaResponse.Name)
 	}
 
 	// Check ordered columns
-	orderedColumns, ok := schemaResponse["OrderedColumns"].([]interface{})
-	if !ok {
-		t.Fatal("Expected 'OrderedColumns' key in schema response")
-	}
-
-	// Fetch expected column names from environment variables
 	expectedColumnNames := os.Getenv("COLUMN_NAMES")
 	if expectedColumnNames == "" {
 		t.Fatal("Environment variable COLUMN_NAMES is not set")
@@ -195,19 +169,8 @@ func TestGetSchemaHandler(t *testing.T) {
 		expectedColumns[col] = true
 	}
 
-	for _, col := range orderedColumns {
-		colMap, ok := col.(map[string]any)
-		if !ok {
-			t.Fatalf("Column is not a valid object: %v", col)
-		}
-
-		colName, ok := colMap["Name"].(string)
-		if !ok {
-			t.Fatalf("Column does not have a valid 'Name' field: %v", colMap)
-		}
-
-		delete(expectedColumns, colName)
-
+	for _, col := range schemaResponse.OrderedColumns {
+		delete(expectedColumns, col.Name)
 	}
 
 	if len(expectedColumns) > 0 {

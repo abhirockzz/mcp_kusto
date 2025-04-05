@@ -61,9 +61,9 @@ func listDatabasesHandler(ctx context.Context, request mcp.CallToolRequest) (*mc
 		databaseNames = append(databaseNames, databaseName)
 	}
 
-	result := map[string]any{
-		"databases": databaseNames,
-	}
+	var result ListDatabasesResponse
+
+	result.Databases = databaseNames
 
 	jsonResult, err := json.Marshal(result)
 	if err != nil {
@@ -71,4 +71,8 @@ func listDatabasesHandler(ctx context.Context, request mcp.CallToolRequest) (*mc
 	}
 
 	return mcp.NewToolResultText(string(jsonResult)), nil
+}
+
+type ListDatabasesResponse struct {
+	Databases []string `json:"databases"`
 }
