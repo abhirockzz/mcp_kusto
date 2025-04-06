@@ -1,0 +1,9 @@
+{
+  "servers": {
+    "Kusto MCP server": {
+      "type": "stdio",
+      "command": "enter path to binary e.g. /Users/demo/Desktop/mcp_kusto",
+      "args": []
+    }
+  }
+}

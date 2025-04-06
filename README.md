@@ -9,7 +9,7 @@ It exposes tools for interacting with Azure Data Explorer:
 3. **get_table_schema** - Gets the schema of a specific table in an Azure Data Explorer database.
 4. **execute_query** - Executes a read-only KQL query against a database.
 
-> Need to add more tools? Just let me know!
+> Word(s) of caution: As much as I want folks to benefit from this, I have to call out that Large Language Models (LLMs) are non-deterministic by nature and can make mistakes. I would recommend you to **always validate** the results before making any decisions based on them. As far as the queries are concerned (based on the `execute_query` tool response), unless absolutely sure, **do not** execute them directly in your cluster.
 
 Here is a sneak peek:
 
@@ -26,29 +26,37 @@ go build -o mcp_kusto main.go
 
 ### Configure the MCP server
 
-This will differ based on the MCP client/tool you use. For VS Code you can [follow these instructions](https://code.visualstudio.com/docs/copilot/chat/mcp-servers#_add-an-mcp-server) on how to configure this server using a `mcp.json` file.
+This will differ based on the MCP client/tool you use. For VS Code you can [follow these instructions](https://code.visualstudio.com/docs/copilot/chat/mcp-servers#_add-an-mcp-server) on how to configure this server using a `mcp.json` file. 
 
-Here is an example of how to create this `mcp.json` file (I recommend using the link shared above):
+Here is an example of the [mcp.json file](mcp.json):
 
-```bash
-mkdir -p .vscode
-
-# Define the content for mcp.json
-MCP_JSON_CONTENT=$(cat <<EOF
+```json
 {
   "servers": {
-    "Kusto MCP Server": {
+    "Kusto MCP server": {
       "type": "stdio",
-      "command": "$(pwd)/mcp_kusto"
-    }
+      "command": "enter path to binary e.g. /Users/demo/Desktop/mcp_kusto",
+      "args": []
+    },
+    //other MCP servers...
   }
 }
-EOF
-)
-
-# Write the content to mcp.json
-echo "$MCP_JSON_CONTENT" > .vscode/mcp.json
 ```
+
+```json
+{
+  "mcpServers": {
+    "Kusto MCP server": {
+      "command": "enter path to binary e.g. /Users/demo/Desktop/mcp_kusto",
+      "args": []
+    },
+    //other MCP servers...
+  }
+}
+```
+
+
+
 
 ### Authentication
 
