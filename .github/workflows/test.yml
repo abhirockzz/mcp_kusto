@@ -14,13 +14,16 @@ jobs:
       DB_NAME: testdb
       TABLE_NAME: test_table
       COLUMN_NAMES: column1,column2,column3
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
     steps:
-      - name: Azure login
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-      
+      # - name: Azure login
+      #   uses: azure/login@v2
+      #   with:
+      #     creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Checkout code
         uses: actions/checkout@v3
 
