@@ -9,7 +9,7 @@ It exposes tools for interacting with Azure Data Explorer:
 3. **get_table_schema** - Gets the schema of a specific table in an Azure Data Explorer database.
 4. **execute_query** - Executes a read-only KQL query against a database.
 
-> Word(s) of caution: As much as I want folks to benefit from this, I have to call out that Large Language Models (LLMs) are non-deterministic by nature and can make mistakes. I would recommend you to **always validate** the results before making any decisions based on them. As far as the queries are concerned (based on the `execute_query` tool response), unless absolutely sure, **do not** execute them directly in your cluster.
+> Word(s) of caution: As much as I want folks to benefit from this, I have to call out that Large Language Models (LLMs) are non-deterministic by nature and can make mistakes. I would recommend you to **always validate** the results and queries before making any decisions based on them.
 
 Here is a sneak peek:
 
@@ -43,6 +43,8 @@ Here is an example of the [mcp.json file](mcp.json):
 }
 ```
 
+Here is an example of Claude Desktop configuration:
+
 ```json
 {
   "mcpServers": {
@@ -54,9 +56,6 @@ Here is an example of the [mcp.json file](mcp.json):
   }
 }
 ```
-
-
-
 
 ### Authentication
 
